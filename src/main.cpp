@@ -6,6 +6,9 @@
 #define DHTTYPE DHT11
 DHT dht(DHTPIN, DHTTYPE);
 
+#define FAN 38
+#define BUZZER 39
+
 float temperature = 30.3;
 float humidity = 75.5;
 float esr[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -27,6 +30,13 @@ void readDHTTask(void *parameter)
     {
       temperature = t;
       humidity = h;
+
+      if (temperature >= 30)
+      {
+        digitalWrite(FAN, LOW);
+      }
+      else
+        digitalWrite(FAN, HIGH);
     }
 
     vTaskDelay(5000 / portTICK_PERIOD_MS);
@@ -83,6 +93,22 @@ void esrTask(void *parameter)
   }
 }
 
+void buzzerTask(void *parameter)
+{
+  for (int i = 0; i < 6; i++) // 6 × 500ms = ~3 seconds
+  {
+    digitalWrite(BUZZER, LOW);
+    vTaskDelay(pdMS_TO_TICKS(250));
+
+    digitalWrite(BUZZER, HIGH);
+    vTaskDelay(pdMS_TO_TICKS(250));
+  }
+
+  digitalWrite(BUZZER, HIGH);
+
+  vTaskDelete(NULL);
+}
+
 void setup()
 {
   Serial.begin(9600);
@@ -93,10 +119,15 @@ void setup()
     pinMode(esr_sensor[i], INPUT);
     pinMode(indicator[i], OUTPUT);
   }
+  pinMode(BUZZER, OUTPUT);
+  pinMode(FAN, OUTPUT);
+  digitalWrite(BUZZER, HIGH);
+  digitalWrite(FAN, HIGH);
 
-  xTaskCreate(readDHTTask, "ReadDHT", 2048, NULL, 1, NULL);
-  xTaskCreate(printTask, "Print", 2048, NULL, 1, NULL);
+  xTaskCreate(readDHTTask, "ReadDHT", 512, NULL, 1, NULL);
+  xTaskCreate(printTask, "Print", 512, NULL, 1, NULL);
   xTaskCreate(esrTask, "ESR Task", 256, NULL, 1, NULL);
+  xTaskCreate(buzzerTask, "Buzzer", 128, NULL, 1, NULL);
 }
 
 void loop()

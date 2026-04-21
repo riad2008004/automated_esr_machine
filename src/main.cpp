@@ -37,7 +37,7 @@ void stepperTask(void *pvParameters)
 
   while (1)
   {
-
+    temp_testtube = 0;
     for (int i = 0; i < 10; i++)
     {
       if (digitalRead(i))
@@ -45,9 +45,6 @@ void stepperTask(void *pvParameters)
     }
     if (temp_testtube != 0)
     {
-      /* code */
-      temp_testtube = 0;
-
       // -------- FORWARD 5000 STEPS --------
       stepCount = 0;
       direction = 1;
@@ -202,7 +199,7 @@ void setup()
   xTaskCreate(printTask, "Print", 512, NULL, 1, NULL);
   xTaskCreate(esrTask, "ESR Task", 256, NULL, 1, NULL);
   xTaskCreate(buzzerTask, "Buzzer", 128, NULL, 1, NULL);
-  xTaskCreate(stepperTask, "Stepper Task", 256, NULL, 1, NULL);
+  xTaskCreate(stepperTask, "Stepper Task", 512, NULL, 1, NULL);
 
   vTaskStartScheduler();
 }

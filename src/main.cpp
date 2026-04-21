@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <DHT.h>
+#include <Stepper.h>
 #include <Arduino_FreeRTOS.h>
 
 #define DHTPIN A0
@@ -9,6 +10,8 @@ DHT dht(DHTPIN, DHTTYPE);
 #define FAN 38
 #define BUZZER 39
 
+#define STEPS 2048
+
 float temperature = 30.3;
 float humidity = 75.5;
 float esr[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -17,6 +20,74 @@ float esr[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 // LED From 1: 23,22,21,20,19,18,17,16,15,14
 int esr_sensor[10] = {A1, A6, A8, A5, A7, A3, A9, A4, A10, A2};
 int indicator[10] = {23, 22, 21, 20, 19, 18, 17, 16, 15, 14};
+
+// Motor 1
+Stepper motor1(STEPS, 29, 31, 30, 49);
+// Motor 2
+Stepper motor2(STEPS, 48, 50, 51, 52);
+
+void stepperTask(void *pvParameters)
+{
+  vTaskDelay(3000 / portTICK_PERIOD_MS);
+
+  const int maxSteps = 5000;
+  int stepCount = 0;
+  int direction = 1;
+  int temp_testtube = 0;
+
+  while (1)
+  {
+
+    for (int i = 0; i < 10; i++)
+    {
+      if (digitalRead(i))
+        temp_testtube++;
+    }
+    if (temp_testtube != 0)
+    {
+      /* code */
+      temp_testtube = 0;
+
+      // -------- FORWARD 5000 STEPS --------
+      stepCount = 0;
+      direction = 1;
+
+      while (stepCount < maxSteps)
+      {
+        motor1.step(direction);
+        motor2.step(direction);
+
+        stepCount++;
+        vTaskDelay(5 / portTICK_PERIOD_MS); // non-blocking step delay
+      }
+
+      // -------- BACKWARD 5000 STEPS --------
+      stepCount = 0;
+      direction = -1;
+
+      while (stepCount < maxSteps)
+      {
+        motor1.step(direction);
+        motor2.step(direction);
+
+        stepCount++;
+        vTaskDelay(5 / portTICK_PERIOD_MS);
+      }
+      // make rest the motor
+      digitalWrite(29, LOW);
+      digitalWrite(30, LOW);
+      digitalWrite(31, LOW);
+      digitalWrite(49, LOW);
+
+      digitalWrite(48, LOW);
+      digitalWrite(51, LOW);
+      digitalWrite(50, LOW);
+      digitalWrite(52, LOW);
+      // -------- REST FOR 1 MINUTE --------
+      vTaskDelay(60000 / portTICK_PERIOD_MS); // 60,000 ms = 1 min
+    }
+  }
+}
 
 // Task: Read DHT11
 void readDHTTask(void *parameter)
@@ -124,10 +195,16 @@ void setup()
   digitalWrite(BUZZER, HIGH);
   digitalWrite(FAN, HIGH);
 
+  motor1.setSpeed(10);
+  motor2.setSpeed(10);
+
   xTaskCreate(readDHTTask, "ReadDHT", 512, NULL, 1, NULL);
   xTaskCreate(printTask, "Print", 512, NULL, 1, NULL);
   xTaskCreate(esrTask, "ESR Task", 256, NULL, 1, NULL);
   xTaskCreate(buzzerTask, "Buzzer", 128, NULL, 1, NULL);
+  xTaskCreate(stepperTask, "Stepper Task", 256, NULL, 1, NULL);
+
+  vTaskStartScheduler();
 }
 
 void loop()

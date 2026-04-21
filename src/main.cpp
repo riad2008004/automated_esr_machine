@@ -40,7 +40,7 @@ void stepperTask(void *pvParameters)
     temp_testtube = 0;
     for (int i = 0; i < 10; i++)
     {
-      if (digitalRead(i))
+      if (digitalRead(esr_sensor[i]))
         temp_testtube++;
     }
     if (temp_testtube != 0)
@@ -197,7 +197,7 @@ void setup()
 
   xTaskCreate(readDHTTask, "ReadDHT", 512, NULL, 1, NULL);
   xTaskCreate(printTask, "Print", 512, NULL, 1, NULL);
-  xTaskCreate(esrTask, "ESR Task", 256, NULL, 1, NULL);
+  xTaskCreate(esrTask, "ESR Task", 128, NULL, 1, NULL);
   xTaskCreate(buzzerTask, "Buzzer", 128, NULL, 1, NULL);
   xTaskCreate(stepperTask, "Stepper Task", 512, NULL, 1, NULL);
 

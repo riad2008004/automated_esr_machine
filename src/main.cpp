@@ -40,7 +40,7 @@ void stepperTask(void *pvParameters)
     temp_testtube = 0;
     for (int i = 0; i < 10; i++)
     {
-      if (digitalRead(esr_sensor[i]))
+      if (!digitalRead(esr_sensor[i]))
         temp_testtube++;
     }
     if (temp_testtube != 0)

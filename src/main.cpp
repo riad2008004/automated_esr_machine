@@ -55,7 +55,7 @@ void stepperTask(void *pvParameters)
         motor2.step(direction);
 
         stepCount++;
-        vTaskDelay(5 / portTICK_PERIOD_MS); // non-blocking step delay
+        taskYIELD();
       }
 
       // -------- BACKWARD 5000 STEPS --------
@@ -68,7 +68,7 @@ void stepperTask(void *pvParameters)
         motor2.step(direction);
 
         stepCount++;
-        vTaskDelay(5 / portTICK_PERIOD_MS);
+        taskYIELD();
       }
       // make rest the motor
       digitalWrite(29, LOW);
@@ -195,11 +195,11 @@ void setup()
   motor1.setSpeed(10);
   motor2.setSpeed(10);
 
-  xTaskCreate(readDHTTask, "ReadDHT", 512, NULL, 1, NULL);
-  xTaskCreate(printTask, "Print", 512, NULL, 1, NULL);
+  xTaskCreate(readDHTTask, "ReadDHT", 1024, NULL, 1, NULL);
+  xTaskCreate(printTask, "Print", 1024, NULL, 1, NULL);
   xTaskCreate(esrTask, "ESR Task", 128, NULL, 1, NULL);
   xTaskCreate(buzzerTask, "Buzzer", 128, NULL, 1, NULL);
-  xTaskCreate(stepperTask, "Stepper Task", 512, NULL, 1, NULL);
+  xTaskCreate(stepperTask, "Stepper Task", 1024, NULL, 1, NULL);
 
   vTaskStartScheduler();
 }
